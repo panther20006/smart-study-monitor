@@ -1,6 +1,11 @@
 /* =========================================================
    SMART STUDY MONITOR
-   FAST OPTIMIZED JS
+   EYE DETECTION + AUDIO
+========================================================= */
+
+
+/* =========================================================
+   ELEMENTS
 ========================================================= */
 
 const video = document.getElementById("video");
@@ -12,14 +17,14 @@ const cameraMessage = document.getElementById("cameraMessage");
 const eyeAudio = document.getElementById("eyeAudio");
 const phoneAudio = document.getElementById("phoneAudio");
 
+const startBtn = document.getElementById("startBtn");
+
 const leftEAR = document.getElementById("leftEAR");
 const rightEAR = document.getElementById("rightEAR");
 const averageEAR = document.getElementById("averageEAR");
 const eyeStatus = document.getElementById("eyeStatus");
 
-const ctx = canvas.getContext("2d", {
-    willReadFrequently: true
-});
+const ctx = canvas.getContext("2d");
 
 
 /* =========================================================
@@ -28,23 +33,14 @@ const ctx = canvas.getContext("2d", {
 
 const SETTINGS = {
 
-    // Eyes closed continuously for 1.2 seconds
+    // Eye must remain closed for this long
     eyeClosedDuration: 1200,
 
-    // EAR threshold
-    eyeThreshold: 0.21,
+    // Lower = more sensitive to closed eyes
+    eyeThreshold: 0.20,
 
-    // Eye detection interval
+    // Face detection speed
     eyeDetectionInterval: 80,
-
-    // Phone confidence
-    phoneConfidence: 0.55,
-
-    // Phone detection interval
-    phoneDetectionInterval: 1000,
-
-    // Audio delay
-    audioDelay: 250,
 
     // Audio cooldown
     audioCooldown: 5000
@@ -57,28 +53,109 @@ const SETTINGS = {
 ========================================================= */
 
 let faceMesh = null;
-let phoneModel = null;
 
 let cameraStream = null;
 
 let faceLoopRunning = false;
-let phoneLoopRunning = false;
-
-let phoneModelLoading = false;
-let isDetectingPhone = false;
 
 let eyesClosedSince = null;
 
 let eyesClosed = false;
-let phoneDetected = false;
+
+let audioUnlocked = false;
 
 let lastEyeAudio = 0;
-let lastPhoneAudio = 0;
 
 let eyeAudioTimer = null;
-let phoneAudioTimer = null;
 
-let lastWarningType = null;
+
+/* =========================================================
+   START BUTTON
+========================================================= */
+
+startBtn.addEventListener("click", async () => {
+
+    console.log("START clicked");
+
+    // Unlock browser audio
+    await unlockAudio();
+
+    // Start camera
+    await startCamera();
+
+    startBtn.textContent = "✓ MONITORING ACTIVE";
+
+    startBtn.classList.add("active");
+
+    setTimeout(() => {
+
+        startBtn.style.display = "none";
+
+    }, 1000);
+
+});
+
+
+/* =========================================================
+   AUDIO UNLOCK
+========================================================= */
+
+async function unlockAudio() {
+
+    if (audioUnlocked) {
+        return;
+    }
+
+    try {
+
+        /*
+         * Browser audio permission
+         */
+
+        eyeAudio.muted = true;
+
+        await eyeAudio.play();
+
+        eyeAudio.pause();
+
+        eyeAudio.currentTime = 0;
+
+        eyeAudio.muted = false;
+
+
+        /*
+         * Phone audio also unlock
+         */
+
+        if (phoneAudio) {
+
+            phoneAudio.muted = true;
+
+            await phoneAudio.play();
+
+            phoneAudio.pause();
+
+            phoneAudio.currentTime = 0;
+
+            phoneAudio.muted = false;
+
+        }
+
+
+        audioUnlocked = true;
+
+        console.log("Audio unlocked");
+
+    } catch (error) {
+
+        console.error(
+            "Audio unlock failed:",
+            error
+        );
+
+    }
+
+}
 
 
 /* =========================================================
@@ -89,25 +166,21 @@ async function startCamera() {
 
     try {
 
-        cameraMessage.textContent =
-            "Starting camera...";
-
-        cameraMessage.classList.add("show");
-
-
         cameraStream =
             await navigator.mediaDevices.getUserMedia({
 
                 video: {
+
                     width: {
-                        ideal: 640
+                        ideal: 1280
                     },
 
                     height: {
-                        ideal: 480
+                        ideal: 720
                     },
 
                     facingMode: "user"
+
                 },
 
                 audio: false
@@ -126,7 +199,7 @@ async function startCamera() {
 
             } catch (error) {
 
-                console.warn(
+                console.error(
                     "Video play error:",
                     error
                 );
@@ -146,11 +219,14 @@ async function startCamera() {
             );
 
 
-            if (faceMesh) {
+            console.log(
+                "Camera ready:",
+                video.videoWidth,
+                video.videoHeight
+            );
 
-                startFaceDetection();
 
-            }
+            startFaceDetection();
 
         };
 
@@ -162,9 +238,8 @@ async function startCamera() {
             error
         );
 
-
         cameraMessage.textContent =
-            "Please allow camera access.";
+            "Camera permission denied.";
 
         cameraMessage.classList.add(
             "show"
@@ -196,6 +271,10 @@ function initializeFaceMesh() {
 
         maxNumFaces: 1,
 
+        /*
+         * Important for eye landmarks
+         */
+
         refineLandmarks: true,
 
         minDetectionConfidence: 0.5,
@@ -219,7 +298,7 @@ function initializeFaceMesh() {
 function handleFaceResults(results) {
 
     /*
-     * Face not detected
+     * No face
      */
 
     if (
@@ -227,13 +306,15 @@ function handleFaceResults(results) {
         results.multiFaceLandmarks.length === 0
     ) {
 
+        leftEAR.textContent = "--";
+        rightEAR.textContent = "--";
+        averageEAR.textContent = "--";
+
+        eyeStatus.textContent = "NO FACE";
+
+        eyeStatus.className = "waiting";
+
         resetEyes();
-
-        eyeStatus.textContent =
-            "WAITING";
-
-        eyeStatus.className =
-            "waiting";
 
         return;
 
@@ -241,7 +322,7 @@ function handleFaceResults(results) {
 
 
     /*
-     * Face detected
+     * Get face
      */
 
     const landmarks =
@@ -285,7 +366,7 @@ function handleFaceResults(results) {
 
 
     /*
-     * AVERAGE
+     * Average
      */
 
     const average =
@@ -293,7 +374,7 @@ function handleFaceResults(results) {
 
 
     /*
-     * Update eye ratio
+     * SHOW VALUES
      */
 
     leftEAR.textContent =
@@ -307,7 +388,19 @@ function handleFaceResults(results) {
 
 
     /*
-     * Eye detection
+     * DEBUG
+     */
+
+    console.log(
+        "EAR:",
+        left.toFixed(3),
+        right.toFixed(3),
+        average.toFixed(3)
+    );
+
+
+    /*
+     * EYE STATE
      */
 
     if (
@@ -319,7 +412,7 @@ function handleFaceResults(results) {
 
     } else {
 
-        resetEyes();
+        handleEyesOpen();
 
     }
 
@@ -330,41 +423,29 @@ function handleFaceResults(results) {
    EYE EAR
 ========================================================= */
 
-function getEyeEAR(
-    landmarks,
-    points
-) {
+function getEyeEAR(landmarks, points) {
 
-    const p1 =
-        landmarks[points[0]];
-
-    const p2 =
-        landmarks[points[1]];
-
-    const p3 =
-        landmarks[points[2]];
-
-    const p4 =
-        landmarks[points[3]];
-
-    const p5 =
-        landmarks[points[4]];
-
-    const p6 =
-        landmarks[points[5]];
+    const p1 = landmarks[points[0]];
+    const p2 = landmarks[points[1]];
+    const p3 = landmarks[points[2]];
+    const p4 = landmarks[points[3]];
+    const p5 = landmarks[points[4]];
+    const p6 = landmarks[points[5]];
 
 
     const vertical1 =
         distance(p2, p6);
 
+
     const vertical2 =
         distance(p3, p5);
+
 
     const horizontal =
         distance(p1, p4);
 
 
-    if (horizontal <= 0) {
+    if (horizontal === 0) {
 
         return 1;
 
@@ -406,6 +487,10 @@ function distance(a, b) {
 
 function handleEyesClosed() {
 
+    /*
+     * Update UI immediately
+     */
+
     eyeStatus.textContent =
         "CLOSING";
 
@@ -417,9 +502,7 @@ function handleEyesClosed() {
      * Start timer
      */
 
-    if (
-        eyesClosedSince === null
-    ) {
+    if (eyesClosedSince === null) {
 
         eyesClosedSince =
             performance.now();
@@ -430,7 +513,7 @@ function handleEyesClosed() {
 
 
     /*
-     * Calculate duration
+     * Calculate closed duration
      */
 
     const duration =
@@ -439,7 +522,7 @@ function handleEyesClosed() {
 
 
     /*
-     * Closed for 1.2 seconds
+     * 1.2 seconds completed
      */
 
     if (
@@ -451,12 +534,16 @@ function handleEyesClosed() {
 
             eyesClosed = true;
 
-
             eyeStatus.textContent =
                 "CLOSED";
 
             eyeStatus.className =
                 "closed";
+
+
+            console.log(
+                "EYES CLOSED - WARNING"
+            );
 
 
             showEyeWarning();
@@ -469,25 +556,45 @@ function handleEyesClosed() {
 
 
 /* =========================================================
-   RESET EYES
+   EYES OPEN
 ========================================================= */
 
-function resetEyes() {
+function handleEyesOpen() {
 
     eyesClosedSince = null;
+
+
+    eyeStatus.textContent =
+        "OPEN";
+
+    eyeStatus.className =
+        "open";
 
 
     if (eyesClosed) {
 
         eyesClosed = false;
 
-        eyeStatus.textContent =
-            "OPEN";
+        hideWarning();
 
-        eyeStatus.className =
-            "open";
+    }
 
-        updateWarning();
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function resetEyes() {
+
+    eyesClosedSince = null;
+
+    if (eyesClosed) {
+
+        eyesClosed = false;
+
+        hideWarning();
 
     }
 
@@ -501,12 +608,20 @@ function resetEyes() {
 async function startFaceDetection() {
 
     if (faceLoopRunning) {
+
         return;
+
     }
 
 
     if (!faceMesh) {
+
+        console.error(
+            "FaceMesh not initialized"
+        );
+
         return;
+
     }
 
 
@@ -523,13 +638,15 @@ async function startFaceDetection() {
             try {
 
                 await faceMesh.send({
+
                     image: video
+
                 });
 
             } catch (error) {
 
                 console.warn(
-                    "Face detection:",
+                    "Face detection error:",
                     error
                 );
 
@@ -548,337 +665,31 @@ async function startFaceDetection() {
 
 
 /* =========================================================
-   COCO SSD PHONE MODEL
-========================================================= */
-
-async function initializePhoneModel() {
-
-    if (
-        phoneModelLoading ||
-        phoneModel
-    ) {
-
-        return;
-
-    }
-
-
-    phoneModelLoading = true;
-
-
-    try {
-
-        /*
-         * Lightweight model
-         */
-
-        phoneModel =
-            await cocoSsd.load({
-                base: "lite_mobilenet_v2"
-            });
-
-
-        console.log(
-            "Phone detection ready"
-        );
-
-
-        startPhoneDetection();
-
-
-    } catch (error) {
-
-        console.error(
-            "Phone model error:",
-            error
-        );
-
-    } finally {
-
-        phoneModelLoading = false;
-
-    }
-
-}
-
-
-/* =========================================================
-   PHONE DETECTION LOOP
-========================================================= */
-
-async function startPhoneDetection() {
-
-    if (phoneLoopRunning) {
-        return;
-    }
-
-
-    if (!phoneModel) {
-        return;
-    }
-
-
-    phoneLoopRunning = true;
-
-
-    while (phoneLoopRunning) {
-
-        if (
-            video.readyState >= 2 &&
-            video.videoWidth > 0
-        ) {
-
-            await detectPhone();
-
-        }
-
-
-        await sleep(
-            SETTINGS.phoneDetectionInterval
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   DETECT PHONE
-========================================================= */
-
-async function detectPhone() {
-
-    if (
-        isDetectingPhone ||
-        !phoneModel
-    ) {
-
-        return;
-
-    }
-
-
-    isDetectingPhone = true;
-
-
-    try {
-
-        /*
-         * Capture frame
-         */
-
-        ctx.drawImage(
-            video,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-        );
-
-
-        /*
-         * Detect objects
-         */
-
-        const predictions =
-            await phoneModel.detect(
-                canvas
-            );
-
-
-        /*
-         * Find cell phone
-         */
-
-        const phone =
-            predictions.some(
-                prediction => {
-
-                    return (
-
-                        prediction.class ===
-                        "cell phone"
-
-                        &&
-
-                        prediction.score >=
-                        SETTINGS.phoneConfidence
-
-                    );
-
-                }
-            );
-
-
-        /*
-         * PHONE FOUND
-         */
-
-        if (phone) {
-
-            if (!phoneDetected) {
-
-                phoneDetected = true;
-
-                showPhoneWarning();
-
-            }
-
-        }
-
-
-        /*
-         * PHONE NOT FOUND
-         */
-
-        else {
-
-            if (phoneDetected) {
-
-                phoneDetected = false;
-
-                updateWarning();
-
-            }
-
-        }
-
-
-    } catch (error) {
-
-        console.warn(
-            "Phone detection:",
-            error
-        );
-
-    } finally {
-
-        isDetectingPhone = false;
-
-    }
-
-}
-
-
-/* =========================================================
    EYE WARNING
 ========================================================= */
 
 function showEyeWarning() {
 
-    updateWarning();
-
-    playEyeAudio();
-
-}
-
-
-/* =========================================================
-   PHONE WARNING
-========================================================= */
-
-function showPhoneWarning() {
-
-    updateWarning();
-
-    playPhoneAudio();
-
-}
-
-
-/* =========================================================
-   WARNING MANAGEMENT
-========================================================= */
-
-function updateWarning() {
-
     /*
-     * Phone priority
+     * Show text immediately
      */
-
-    if (phoneDetected) {
-
-        setWarning(
-            "PUT THE PHONE AWAY!",
-            "phone"
-        );
-
-        return;
-
-    }
-
-
-    /*
-     * Eye warning
-     */
-
-    if (eyesClosed) {
-
-        setWarning(
-            "WAKE UP!",
-            "eye"
-        );
-
-        return;
-
-    }
-
-
-    /*
-     * Nothing detected
-     */
-
-    hideWarning();
-
-}
-
-
-/* =========================================================
-   SET WARNING
-========================================================= */
-
-function setWarning(
-    text,
-    type
-) {
-
-    if (
-        lastWarningType === type &&
-        warning.textContent === text &&
-        warning.classList.contains("show")
-    ) {
-
-        return;
-
-    }
-
-
-    lastWarningType = type;
-
 
     warning.textContent =
-        text;
-
+        "WAKE UP!";
 
     warning.className =
-        "warning";
-
-
-    warning.classList.add(
-        type
-    );
-
-
-    /*
-     * Restart animation
-     */
-
-    void warning.offsetWidth;
-
+        "warning eye";
 
     warning.classList.add(
         "show"
     );
+
+
+    /*
+     * Play sound
+     */
+
+    playEyeAudio();
 
 }
 
@@ -889,31 +700,14 @@ function setWarning(
 
 function hideWarning() {
 
-    lastWarningType = null;
-
-
     warning.classList.remove(
         "show"
     );
 
+    warning.className =
+        "warning";
 
-    setTimeout(() => {
-
-        if (
-            !warning.classList.contains(
-                "show"
-            )
-        ) {
-
-            warning.className =
-                "warning";
-
-            warning.textContent =
-                "";
-
-        }
-
-    }, 160);
+    warning.textContent = "";
 
 }
 
@@ -928,10 +722,18 @@ function playEyeAudio() {
         Date.now();
 
 
+    /*
+     * Cooldown
+     */
+
     if (
         now - lastEyeAudio <
         SETTINGS.audioCooldown
     ) {
+
+        console.log(
+            "Audio cooldown"
+        );
 
         return;
 
@@ -959,88 +761,61 @@ function playEyeAudio() {
 
 
 /* =========================================================
-   PHONE AUDIO
-========================================================= */
-
-function playPhoneAudio() {
-
-    const now =
-        Date.now();
-
-
-    if (
-        now - lastPhoneAudio <
-        SETTINGS.audioCooldown
-    ) {
-
-        return;
-
-    }
-
-
-    lastPhoneAudio = now;
-
-
-    clearTimeout(
-        phoneAudioTimer
-    );
-
-
-    phoneAudioTimer =
-        setTimeout(() => {
-
-            playAudio(
-                phoneAudio
-            );
-
-        }, SETTINGS.audioDelay);
-
-}
-
-
-/* =========================================================
    PLAY AUDIO
 ========================================================= */
 
-function playAudio(audio) {
+async function playAudio(audio) {
 
     if (!audio) {
+
+        console.error(
+            "Audio element not found"
+        );
+
         return;
+
     }
 
 
     try {
 
+        console.log(
+            "Playing audio:",
+            audio.src
+        );
+
+
         audio.pause();
 
         audio.currentTime = 0;
 
+        audio.muted = false;
 
-        const promise =
-            audio.play();
+        audio.volume = 1;
 
 
-        if (promise) {
+        await audio.play();
 
-            promise.catch(
-                error => {
 
-                    console.warn(
-                        "Audio blocked:",
-                        error
-                    );
+        console.log(
+            "Audio playing"
+        );
 
-                }
-            );
-
-        }
 
     } catch (error) {
 
         console.error(
-            "Audio error:",
+            "Audio PLAY ERROR:",
             error
         );
+
+
+        /*
+         * If browser blocked it,
+         * try after user interaction
+         */
+
+        audioUnlocked = false;
 
     }
 
@@ -1048,7 +823,7 @@ function playAudio(audio) {
 
 
 /* =========================================================
-   SLEEP
+   UTILITY
 ========================================================= */
 
 function sleep(ms) {
@@ -1065,35 +840,26 @@ function sleep(ms) {
 
 
 /* =========================================================
-   INITIALIZATION
+   INITIALIZE
 ========================================================= */
 
 function initialize() {
 
+    console.log(
+        "Smart Study Monitor loading..."
+    );
+
+
     /*
-     * FaceMesh initialize
+     * Initialize MediaPipe
      */
 
     initializeFaceMesh();
 
 
-    /*
-     * Camera immediately
-     */
-
-    startCamera();
-
-
-    /*
-     * Phone AI loads AFTER 1.5 sec
-     * in background
-     */
-
-    setTimeout(() => {
-
-        initializePhoneModel();
-
-    }, 1500);
+    console.log(
+        "FaceMesh ready"
+    );
 
 }
 
@@ -1129,12 +895,6 @@ window.addEventListener(
 
         faceLoopRunning = false;
 
-        phoneLoopRunning = false;
-
-
-        /*
-         * Stop camera
-         */
 
         if (cameraStream) {
 
@@ -1149,16 +909,8 @@ window.addEventListener(
         }
 
 
-        /*
-         * Clear timers
-         */
-
         clearTimeout(
             eyeAudioTimer
-        );
-
-        clearTimeout(
-            phoneAudioTimer
         );
 
     }
