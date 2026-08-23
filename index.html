@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Study Monitor</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css">
+
+</head>
+
+<body>
+
+
+    <!-- =====================================================
+         START BUTTON
+    ====================================================== -->
+
+    <button
+        id="startBtn"
+        class="start-btn">
+
+        ▶ START MONITORING
+
+    </button>
+
+
+    <!-- =====================================================
+         FULL SCREEN CAMERA
+    ====================================================== -->
+
+    <main class="camera-container">
+
+
+        <!-- CAMERA -->
+
+        <video
+            id="video"
+            autoplay
+            muted
+            playsinline>
+        </video>
+
+
+        <!-- HIDDEN CANVAS -->
+
+        <canvas
+            id="canvas">
+        </canvas>
+
+
+        <!-- =================================================
+             EYE RATIO
+             SMALL TOP LEFT
+        ================================================== -->
+
+        <div
+            id="eyeStats"
+            class="eye-stats">
+
+            <div class="eye-title">
+                👁 EYE RATIO
+            </div>
+
+            <div class="eye-line">
+
+                <span>Left</span>
+
+                <strong id="leftEAR">
+                    --
+                </strong>
+
+            </div>
+
+            <div class="eye-line">
+
+                <span>Right</span>
+
+                <strong id="rightEAR">
+                    --
+                </strong>
+
+            </div>
+
+            <div class="eye-line average">
+
+                <span>Average</span>
+
+                <strong id="averageEAR">
+                    --
+                </strong>
+
+            </div>
+
+            <div class="eye-status">
+
+                <span>Status</span>
+
+                <strong
+                    id="eyeStatus"
+                    class="waiting">
+
+                    WAITING
+
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             LIVE
+        ================================================== -->
+
+        <div class="live-indicator">
+
+            <span class="live-dot"></span>
+
+            LIVE
+
+        </div>
+
+
+        <!-- =================================================
+             SCAN LINE
+        ================================================== -->
+
+        <div class="scan-line"></div>
+
+
+        <!-- =================================================
+             CAMERA CORNERS
+        ================================================== -->
+
+        <div class="corner top-left"></div>
+
+        <div class="corner top-right"></div>
+
+        <div class="corner bottom-left"></div>
+
+        <div class="corner bottom-right"></div>
+
+
+        <!-- =================================================
+             WARNING
+        ================================================== -->
+
+        <div
+            id="warning"
+            class="warning">
+        </div>
+
+
+        <!-- =================================================
+             CAMERA MESSAGE
+        ================================================== -->
+
+        <div
+            id="cameraMessage"
+            class="camera-message show">
+
+            Click START MONITORING
+
+        </div>
+
+
+    </main>
+
+
+    <!-- =====================================================
+         EYE AUDIO
+    ====================================================== -->
+
+    <audio
+        id="eyeAudio"
+        preload="auto">
+
+        <source
+            src="eye.mp3"
+            type="audio/mpeg">
+
+    </audio>
+
+
+    <!-- =====================================================
+         PHONE AUDIO
+    ====================================================== -->
+
+    <audio
+        id="phoneAudio"
+        preload="auto">
+
+        <source
+            src="phone.mp3"
+            type="audio/mpeg">
+
+    </audio>
+
+
+    <!-- =====================================================
+         MEDIAPIPE
+    ====================================================== -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+
+
+    <!-- =====================================================
+         TENSORFLOW
+    ====================================================== -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+
+
+    <!-- =====================================================
+         COCO SSD
+    ====================================================== -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+
+    <!-- =====================================================
+         MAIN JS
+    ====================================================== -->
+
+    <script src="script.js"></script>
+
+
+</body>
+
+</html>

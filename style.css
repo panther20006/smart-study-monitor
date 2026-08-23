@@ -1,0 +1,776 @@
+/* =========================================================
+   SMART STUDY MONITOR
+   FULL SCREEN CAMERA
+========================================================= */
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+* {
+
+    margin: 0;
+    padding: 0;
+
+    box-sizing: border-box;
+
+}
+
+
+/* =========================================================
+   BODY
+========================================================= */
+
+html,
+body {
+
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+
+    background: #000;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+}
+
+
+/* =========================================================
+   CAMERA CONTAINER
+========================================================= */
+
+.camera-container {
+
+    position: relative;
+
+    width: 100vw;
+    height: 100vh;
+
+    overflow: hidden;
+
+    background: #000;
+
+}
+
+
+/* =========================================================
+   VIDEO
+========================================================= */
+
+#video {
+
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    /*
+     * Full screen camera
+     */
+
+    object-fit: cover;
+
+    /*
+     * Mirror camera
+     * Slightly less zoom
+     */
+
+    transform:
+        scaleX(-1)
+        scale(0.7);
+
+    display: block;
+
+    background: #000;
+
+}
+
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+#canvas {
+
+    display: none;
+
+}
+
+
+/* =========================================================
+   EYE RATIO BOX
+   SMALL TOP LEFT
+========================================================= */
+
+.eye-stats {
+
+    position: absolute;
+
+    top: 18px;
+    left: 18px;
+
+    width: 150px;
+
+    padding: 10px 12px;
+
+    background:
+        rgba(5, 5, 15, 0.82);
+
+    border:
+        1px solid
+        rgba(139, 92, 246, 0.45);
+
+    border-radius: 11px;
+
+    backdrop-filter:
+        blur(12px);
+
+    -webkit-backdrop-filter:
+        blur(12px);
+
+    z-index: 20;
+
+    box-shadow:
+        0 0 20px
+        rgba(139, 92, 246, 0.18);
+
+}
+
+
+/* =========================================================
+   EYE TITLE
+========================================================= */
+
+.eye-title {
+
+    color: #cbb7ff;
+
+    font-size: 10px;
+
+    font-weight: 900;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 6px;
+
+}
+
+
+/* =========================================================
+   EYE ROW
+========================================================= */
+
+.eye-line,
+.eye-status {
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+
+    padding: 4px 0;
+
+    color: #9999ad;
+
+    font-size: 10px;
+
+}
+
+
+/* =========================================================
+   EAR VALUE
+========================================================= */
+
+.eye-line strong {
+
+    color: white;
+
+    font-family:
+        monospace;
+
+    font-size: 11px;
+
+}
+
+
+/* =========================================================
+   AVERAGE
+========================================================= */
+
+.eye-line.average {
+
+    border-top:
+        1px solid
+        rgba(255,255,255,0.08);
+
+    margin-top: 2px;
+
+    padding-top: 5px;
+
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.eye-status {
+
+    border-top:
+        1px solid
+        rgba(255,255,255,0.08);
+
+    margin-top: 3px;
+
+    padding-top: 5px;
+
+}
+
+
+.eye-status strong {
+
+    font-size: 9px;
+
+    letter-spacing: 0.5px;
+
+}
+
+
+/* OPEN */
+
+#eyeStatus.open {
+
+    color: #00ff88;
+
+}
+
+
+/* CLOSED */
+
+#eyeStatus.closed {
+
+    color: #ff3b3b;
+
+    animation:
+        statusBlink 0.7s infinite;
+
+}
+
+
+/* WAITING */
+
+#eyeStatus.waiting {
+
+    color: #ffd43b;
+
+}
+
+
+@keyframes statusBlink {
+
+    50% {
+
+        opacity: 0.35;
+
+    }
+
+}
+
+
+/* =========================================================
+   LIVE
+========================================================= */
+
+.live-indicator {
+
+    position: absolute;
+
+    top: 20px;
+    right: 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding:
+        7px
+        11px;
+
+    background:
+        rgba(0,0,0,0.55);
+
+    border:
+        1px solid
+        rgba(0,255,136,0.25);
+
+    border-radius: 20px;
+
+    color: #00ff88;
+
+    font-size: 10px;
+
+    font-weight: 900;
+
+    letter-spacing: 1px;
+
+    z-index: 20;
+
+    backdrop-filter:
+        blur(8px);
+
+}
+
+
+.live-dot {
+
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background:
+        #00ff88;
+
+    box-shadow:
+        0 0 12px
+        #00ff88;
+
+    animation:
+        livePulse 1s infinite;
+
+}
+
+
+@keyframes livePulse {
+
+    50% {
+
+        opacity: 0.3;
+
+        transform:
+            scale(0.65);
+
+    }
+
+}
+
+
+/* =========================================================
+   SCAN LINE
+========================================================= */
+
+.scan-line {
+
+    position: absolute;
+
+    left: 0;
+    right: 0;
+
+    top: 0;
+
+    height: 2px;
+
+    background:
+        rgba(139, 92, 246, 0.65);
+
+    box-shadow:
+        0 0 18px
+        rgba(139, 92, 246, 0.9);
+
+    animation:
+        scan 3.5s linear infinite;
+
+    pointer-events: none;
+
+    z-index: 10;
+
+}
+
+
+@keyframes scan {
+
+    0% {
+
+        top: 0;
+
+    }
+
+    50% {
+
+        top: 100%;
+
+    }
+
+    100% {
+
+        top: 0;
+
+    }
+
+}
+
+
+/* =========================================================
+   CAMERA CORNERS
+========================================================= */
+
+.corner {
+
+    position: absolute;
+
+    width: 35px;
+    height: 35px;
+
+    border-color:
+        rgba(155,108,255,0.9);
+
+    pointer-events: none;
+
+    z-index: 15;
+
+}
+
+
+.top-left {
+
+    top: 15px;
+    left: 15px;
+
+    border-top:
+        2px solid;
+
+    border-left:
+        2px solid;
+
+}
+
+
+.top-right {
+
+    top: 15px;
+    right: 15px;
+
+    border-top:
+        2px solid;
+
+    border-right:
+        2px solid;
+
+}
+
+
+.bottom-left {
+
+    bottom: 15px;
+    left: 15px;
+
+    border-bottom:
+        2px solid;
+
+    border-left:
+        2px solid;
+
+}
+
+
+.bottom-right {
+
+    bottom: 15px;
+    right: 15px;
+
+    border-bottom:
+        2px solid;
+
+    border-right:
+        2px solid;
+
+}
+
+
+/* =========================================================
+   CAMERA MESSAGE
+========================================================= */
+
+.camera-message {
+
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    padding:
+        13px
+        22px;
+
+    background:
+        rgba(0,0,0,0.75);
+
+    border:
+        1px solid
+        rgba(139,92,246,0.3);
+
+    border-radius: 10px;
+
+    color: #aaa;
+
+    font-size: 14px;
+
+    z-index: 30;
+
+    display: none;
+
+}
+
+
+.camera-message.show {
+
+    display: block;
+
+}
+
+
+/* =========================================================
+   WARNING
+========================================================= */
+
+.warning {
+
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    transform:
+        translate(-50%, -50%)
+        scale(0.75);
+
+    padding:
+        25px
+        40px;
+
+    border-radius: 18px;
+
+    font-size:
+        clamp(
+            24px,
+            5vw,
+            65px
+        );
+
+    font-weight: 900;
+
+    letter-spacing: 2px;
+
+    text-align: center;
+
+    white-space: nowrap;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transition:
+        0.18s ease;
+
+    z-index: 50;
+
+}
+
+
+/* SHOW */
+
+.warning.show {
+
+    opacity: 1;
+
+    transform:
+        translate(-50%, -50%)
+        scale(1);
+
+}
+
+
+/* =========================================================
+   EYE WARNING
+========================================================= */
+
+.warning.eye {
+
+    background:
+        rgba(255, 30, 30, 0.94);
+
+    color: white;
+
+    box-shadow:
+        0 0 70px
+        rgba(255, 30, 30, 0.75);
+
+    animation:
+        warningPulse 0.8s infinite;
+
+}
+
+
+/* =========================================================
+   PHONE WARNING
+========================================================= */
+
+.warning.phone {
+
+    background:
+        rgba(255, 130, 0, 0.95);
+
+    color: white;
+
+    box-shadow:
+        0 0 70px
+        rgba(255, 120, 0, 0.75);
+
+    animation:
+        warningPulse 0.8s infinite;
+
+}
+
+
+/* =========================================================
+   WARNING ANIMATION
+========================================================= */
+
+@keyframes warningPulse {
+
+    50% {
+
+        filter:
+            brightness(1.25);
+
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    #video {
+
+        transform:
+            scaleX(-1)
+            scale(0.88);
+
+    }
+
+
+    .eye-stats {
+
+        top: 12px;
+        left: 12px;
+
+        width: 135px;
+
+        padding:
+            8px
+            10px;
+
+    }
+
+
+    .eye-title {
+
+        font-size: 9px;
+
+    }
+
+
+    .eye-line,
+    .eye-status {
+
+        font-size: 9px;
+
+        padding: 3px 0;
+
+    }
+
+
+    .eye-line strong {
+
+        font-size: 10px;
+
+    }
+
+
+    .live-indicator {
+
+        top: 13px;
+        right: 13px;
+
+        padding:
+            6px
+            9px;
+
+        font-size: 9px;
+
+    }
+
+
+    .corner {
+
+        width: 25px;
+        height: 25px;
+
+    }
+
+
+    .warning {
+
+        width: 90%;
+
+        white-space: normal;
+
+        padding:
+            18px
+            12px;
+
+        font-size: 25px;
+
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 380px) {
+
+    .eye-stats {
+
+        width: 125px;
+
+    }
+
+
+    .live-indicator {
+
+        display: none;
+
+    }
+
+}
