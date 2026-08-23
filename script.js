@@ -1,333 +1,119 @@
 /* =========================================================
    SMART STUDY MONITOR
-   COMPLETE JAVASCRIPT
-   EYE + PHONE + AUDIO
+   DIRECT CAMERA + EYE DETECTION + AUDIO
 ========================================================= */
 
 
-/* =========================================================
+/* =========================================
    ELEMENTS
-========================================================= */
+========================================= */
 
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
+const video =
+    document.getElementById("video");
 
-const ctx = canvas.getContext("2d");
+const canvas =
+    document.getElementById("canvas");
 
-const warning = document.getElementById("warning");
-const cameraMessage = document.getElementById("cameraMessage");
+const ctx =
+    canvas.getContext("2d");
 
-const startBtn = document.getElementById("startBtn");
+const warning =
+    document.getElementById("warning");
 
-const eyeAudio = document.getElementById("eyeAudio");
-const phoneAudio = document.getElementById("phoneAudio");
+const cameraMessage =
+    document.getElementById("cameraMessage");
 
-const leftEAR = document.getElementById("leftEAR");
-const rightEAR = document.getElementById("rightEAR");
-const averageEAR = document.getElementById("averageEAR");
-const eyeStatus = document.getElementById("eyeStatus");
+const eyeAudio =
+    document.getElementById("eyeAudio");
+
+const leftEAR =
+    document.getElementById("leftEAR");
+
+const rightEAR =
+    document.getElementById("rightEAR");
+
+const averageEAR =
+    document.getElementById("averageEAR");
+
+const eyeStatus =
+    document.getElementById("eyeStatus");
 
 
-/* =========================================================
+/* =========================================
    SETTINGS
-========================================================= */
+========================================= */
 
-const SETTINGS = {
+const EYE_THRESHOLD = 0.21;
 
-    /* Eyes closed continuously */
-    eyeClosedDuration: 1200,
+const EYE_CLOSED_TIME = 1200;
 
-    /*
-     * EAR threshold.
-     * If eyes are not detecting correctly,
-     * try 0.22 or 0.23.
-     */
-    eyeThreshold: 0.21,
+const DETECTION_DELAY = 80;
 
-    /* Face detection interval */
-    eyeDetectionInterval: 80,
-
-    /* Phone confidence */
-    phoneConfidence: 0.55,
-
-    /* Phone detection interval */
-    phoneDetectionInterval: 700,
-
-    /* Audio cooldown */
-    audioCooldown: 5000
-};
+const AUDIO_COOLDOWN = 5000;
 
 
-/* =========================================================
-   STATE
-========================================================= */
+/* =========================================
+   VARIABLES
+========================================= */
+
+let faceMesh = null;
 
 let cameraStream = null;
 
-let faceMesh = null;
-let phoneModel = null;
-
-let faceLoopRunning = false;
-let phoneLoopRunning = false;
-
-let phoneDetecting = false;
+let detectionRunning = false;
 
 let eyesClosedSince = null;
 
 let eyesClosed = false;
-let phoneDetected = false;
 
-let lastEyeAudio = 0;
-let lastPhoneAudio = 0;
+let lastAudioTime = 0;
 
-let started = false;
+let audioUnlocked = false;
 
 
-/* =========================================================
-   INITIALIZE
-========================================================= */
+/* =========================================
+   PAGE LOAD
+========================================= */
 
-function initialize() {
+window.addEventListener(
+    "load",
+    () => {
 
-    console.log(
-        "Smart Study Monitor initializing..."
-    );
+        console.log(
+            "Page loaded"
+        );
+
+        startEverything();
+
+    }
+);
+
+
+/* =========================================
+   START EVERYTHING
+========================================= */
+
+async function startEverything() {
 
     /*
-     * Check required elements
-     */
-
-    if (!video) {
-        console.error("Video element missing");
-        return;
-    }
-
-    if (!startBtn) {
-        console.error("Start button missing");
-        return;
-    }
-
-    if (!eyeAudio) {
-        console.error("eye.mp3 audio element missing");
-    }
-
-    if (!phoneAudio) {
-        console.error("phone.mp3 audio element missing");
-    }
-
-
-    /*
-     * Prepare Face Mesh
+     * First prepare FaceMesh
      */
 
     initializeFaceMesh();
 
 
     /*
-     * Start button
+     * Direct camera
      */
 
-    startBtn.addEventListener(
-        "click",
-        startMonitoring
-    );
-
-
-    console.log(
-        "Ready. Click START MONITORING."
-    );
-}
-
-
-/* =========================================================
-   START MONITORING
-========================================================= */
-
-async function startMonitoring() {
-
-    /*
-     * Prevent double click
-     */
-
-    if (started) {
-        return;
-    }
-
-    started = true;
-
-
-    console.log(
-        "Starting monitoring..."
-    );
-
-
-    /*
-     * Change button
-     */
-
-    startBtn.textContent =
-        "STARTING...";
-
-    startBtn.disabled = true;
-
-
-    /*
-     * Unlock audio FIRST
-     *
-     * Important for Chrome/GitHub Pages
-     */
-
-    await unlockAudio();
-
-
-    /*
-     * Start camera
-     */
-
-    const cameraStarted =
-        await startCamera();
-
-
-    /*
-     * Camera failed
-     */
-
-    if (!cameraStarted) {
-
-        started = false;
-
-        startBtn.disabled = false;
-
-        startBtn.textContent =
-            "▶ START MONITORING";
-
-        return;
-    }
-
-
-    /*
-     * Camera started
-     */
-
-    startBtn.textContent =
-        "✓ MONITORING ACTIVE";
-
-    startBtn.classList.add(
-        "active"
-    );
-
-
-    /*
-     * Hide button
-     */
-
-    setTimeout(() => {
-
-        startBtn.style.display =
-            "none";
-
-    }, 1000);
-
-
-    /*
-     * Start phone model
-     *
-     * It loads in background.
-     */
-
-    loadPhoneModel();
+    await startCamera();
 
 }
 
 
-/* =========================================================
-   UNLOCK AUDIO
-========================================================= */
-
-async function unlockAudio() {
-
-    console.log(
-        "Unlocking audio..."
-    );
-
-
-    /*
-     * EYE AUDIO
-     */
-
-    if (eyeAudio) {
-
-        try {
-
-            eyeAudio.muted = true;
-
-            eyeAudio.volume = 1;
-
-            eyeAudio.currentTime = 0;
-
-            await eyeAudio.play();
-
-            eyeAudio.pause();
-
-            eyeAudio.currentTime = 0;
-
-            eyeAudio.muted = false;
-
-        } catch (error) {
-
-            console.warn(
-                "Eye audio unlock:",
-                error
-            );
-
-            eyeAudio.muted = false;
-        }
-    }
-
-
-    /*
-     * PHONE AUDIO
-     */
-
-    if (phoneAudio) {
-
-        try {
-
-            phoneAudio.muted = true;
-
-            phoneAudio.volume = 1;
-
-            phoneAudio.currentTime = 0;
-
-            await phoneAudio.play();
-
-            phoneAudio.pause();
-
-            phoneAudio.currentTime = 0;
-
-            phoneAudio.muted = false;
-
-        } catch (error) {
-
-            console.warn(
-                "Phone audio unlock:",
-                error
-            );
-
-            phoneAudio.muted = false;
-        }
-    }
-
-
-    console.log(
-        "Audio ready."
-    );
-}
-
-
-/* =========================================================
-   START CAMERA
-========================================================= */
+/* =========================================
+   CAMERA
+========================================= */
 
 async function startCamera() {
 
@@ -336,23 +122,23 @@ async function startCamera() {
     );
 
 
-    if (
-        !navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia
-    ) {
-
-        showCameraError(
-            "Camera API is not available. Open the website using HTTPS."
-        );
-
-        return false;
-    }
-
-
     try {
 
+        if (
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ) {
+
+            showMessage(
+                "Camera requires HTTPS"
+            );
+
+            return;
+        }
+
+
         /*
-         * Request webcam
+         * Camera permission
          */
 
         cameraStream =
@@ -377,13 +163,8 @@ async function startCamera() {
             });
 
 
-        console.log(
-            "Camera permission granted."
-        );
-
-
         /*
-         * Attach camera
+         * Attach
          */
 
         video.srcObject =
@@ -391,224 +172,110 @@ async function startCamera() {
 
 
         /*
-         * Wait for video
+         * Wait
          */
 
-        await waitForVideo();
+        await new Promise(
+            resolve => {
+
+                if (
+                    video.readyState >= 2
+                ) {
+
+                    resolve();
+
+                    return;
+                }
+
+
+                video.onloadedmetadata =
+                    () => {
+
+                        resolve();
+
+                    };
+
+            }
+        );
 
 
         /*
          * Play
          */
 
-        try {
-
-            await video.play();
-
-        } catch (error) {
-
-            console.warn(
-                "Video play:",
-                error
-            );
-
-        }
+        await video.play();
 
 
         /*
-         * Canvas size
+         * Canvas
          */
 
         canvas.width =
-            video.videoWidth || 640;
+            video.videoWidth;
 
         canvas.height =
-            video.videoHeight || 480;
+            video.videoHeight;
 
 
         /*
-         * Hide camera message
+         * Hide message
          */
 
-        if (cameraMessage) {
-
-            cameraMessage.classList.remove(
-                "show"
-            );
-
-        }
+        cameraMessage.classList.add(
+            "hide"
+        );
 
 
         console.log(
-            "Camera started successfully."
+            "✓ CAMERA STARTED"
         );
 
 
         /*
-         * Start eye detection
+         * Start eye AI
          */
 
-        startFaceDetection();
-
-
-        return true;
+        startEyeDetection();
 
 
     } catch (error) {
 
         console.error(
-            "Camera error:",
+            "Camera Error:",
             error
         );
 
 
-        let message =
-            "Camera start nahi hua.";
-
-
-        if (
-            error.name ===
-            "NotAllowedError"
-        ) {
-
-            message =
-                "Camera permission Allow karo.";
-
-        }
-
-
-        else if (
-            error.name ===
-            "NotFoundError"
-        ) {
-
-            message =
-                "Camera device nahi mila.";
-
-        }
-
-
-        else if (
-            error.name ===
-            "NotReadableError"
-        ) {
-
-            message =
-                "Camera kisi aur app me use ho raha hai.";
-
-        }
-
-
-        else if (
-            error.name ===
-            "SecurityError"
-        ) {
-
-            message =
-                "HTTPS required hai.";
-
-        }
-
-
-        showCameraError(
-            message
-        );
-
-
-        return false;
-    }
-}
-
-
-/* =========================================================
-   WAIT FOR VIDEO
-========================================================= */
-
-function waitForVideo() {
-
-    return new Promise(
-        resolve => {
-
-            /*
-             * Already ready
-             */
-
-            if (
-                video.readyState >= 2 &&
-                video.videoWidth > 0
-            ) {
-
-                resolve();
-
-                return;
-            }
-
-
-            /*
-             * Metadata event
-             */
-
-            video.onloadedmetadata = () => {
-
-                resolve();
-
-            };
-
-
-            /*
-             * Safety timeout
-             */
-
-            setTimeout(
-                () => {
-
-                    resolve();
-
-                },
-                5000
-            );
-
-        }
-    );
-}
-
-
-/* =========================================================
-   CAMERA ERROR
-========================================================= */
-
-function showCameraError(
-    message
-) {
-
-    if (cameraMessage) {
-
-        cameraMessage.textContent =
-            message;
-
-        cameraMessage.classList.add(
-            "show"
+        showMessage(
+            "Camera permission Allow karo"
         );
 
     }
 
+}
 
-    console.error(
-        message
+
+/* =========================================
+   MESSAGE
+========================================= */
+
+function showMessage(text) {
+
+    cameraMessage.textContent =
+        text;
+
+    cameraMessage.classList.remove(
+        "hide"
     );
 
 }
 
 
-/* =========================================================
-   MEDIAPIPE FACE MESH
-========================================================= */
+/* =========================================
+   MEDIAPIPE
+========================================= */
 
 function initializeFaceMesh() {
-
-    /*
-     * Check library
-     */
 
     if (
         typeof FaceMesh ===
@@ -616,22 +283,21 @@ function initializeFaceMesh() {
     ) {
 
         console.error(
-            "MediaPipe FaceMesh library not loaded."
+            "FaceMesh library not loaded"
+        );
+
+        showMessage(
+            "AI library loading..."
         );
 
         return;
     }
 
 
-    console.log(
-        "Initializing Face Mesh..."
-    );
-
-
     faceMesh =
         new FaceMesh({
 
-            locateFile: (file) => {
+            locateFile: file => {
 
                 return (
                     "https://cdn.jsdelivr.net/npm/" +
@@ -658,31 +324,107 @@ function initializeFaceMesh() {
 
 
     faceMesh.onResults(
-        handleFaceResults
+        faceResults
     );
 
 
     console.log(
-        "Face Mesh ready."
+        "✓ FaceMesh ready"
     );
+
 }
 
 
-/* =========================================================
-   FACE RESULTS
-========================================================= */
+/* =========================================
+   EYE DETECTION
+========================================= */
 
-function handleFaceResults(
-    results
-) {
+async function startEyeDetection() {
+
+    if (
+        detectionRunning
+    ) {
+
+        return;
+    }
+
+
+    if (!faceMesh) {
+
+        console.error(
+            "FaceMesh not ready"
+        );
+
+        return;
+    }
+
+
+    detectionRunning =
+        true;
+
+
+    console.log(
+        "✓ EYE DETECTION STARTED"
+    );
+
+
+    while (
+        detectionRunning
+    ) {
+
+        if (
+
+            video.readyState >= 2 &&
+
+            video.videoWidth > 0
+
+        ) {
+
+            try {
+
+                await faceMesh.send({
+
+                    image: video
+
+                });
+
+            } catch (error) {
+
+                console.warn(
+                    "Eye detection error:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        await sleep(
+            DETECTION_DELAY
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   FACE RESULTS
+========================================= */
+
+function faceResults(results) {
 
     /*
      * No face
      */
 
     if (
+
         !results.multiFaceLandmarks ||
+
         results.multiFaceLandmarks.length === 0
+
     ) {
 
         leftEAR.textContent =
@@ -694,23 +436,20 @@ function handleFaceResults(
         averageEAR.textContent =
             "--";
 
-
         eyeStatus.textContent =
             "NO FACE";
 
         eyeStatus.className =
-            "waiting";
-
+            "";
 
         resetEyes();
-
 
         return;
     }
 
 
     /*
-     * Get first face
+     * Face
      */
 
     const landmarks =
@@ -718,11 +457,11 @@ function handleFaceResults(
 
 
     /*
-     * LEFT EYE
+     * Left eye
      */
 
     const left =
-        getEyeEAR(
+        calculateEAR(
             landmarks,
             [
                 33,
@@ -736,11 +475,11 @@ function handleFaceResults(
 
 
     /*
-     * RIGHT EYE
+     * Right eye
      */
 
     const right =
-        getEyeEAR(
+        calculateEAR(
             landmarks,
             [
                 362,
@@ -754,18 +493,15 @@ function handleFaceResults(
 
 
     /*
-     * AVERAGE
+     * Average
      */
 
-    const average =
-        (
-            left +
-            right
-        ) / 2;
+    const avg =
+        (left + right) / 2;
 
 
     /*
-     * Display EAR
+     * Display
      */
 
     leftEAR.textContent =
@@ -775,34 +511,33 @@ function handleFaceResults(
         right.toFixed(3);
 
     averageEAR.textContent =
-        average.toFixed(3);
+        avg.toFixed(3);
 
 
     /*
-     * Check eye state
+     * Eye state
      */
 
     if (
-        average <
-        SETTINGS.eyeThreshold
+        avg < EYE_THRESHOLD
     ) {
 
-        handleEyesClosed();
+        eyesAreClosed();
 
     } else {
 
-        handleEyesOpen();
+        eyesAreOpen();
 
     }
 
 }
 
 
-/* =========================================================
-   EYE EAR
-========================================================= */
+/* =========================================
+   EAR CALCULATION
+========================================= */
 
-function getEyeEAR(
+function calculateEAR(
     landmarks,
     points
 ) {
@@ -827,28 +562,19 @@ function getEyeEAR(
 
 
     const vertical1 =
-        distance(
-            p2,
-            p6
-        );
+        distance(p2, p6);
 
 
     const vertical2 =
-        distance(
-            p3,
-            p5
-        );
+        distance(p3, p5);
 
 
     const horizontal =
-        distance(
-            p1,
-            p4
-        );
+        distance(p1, p4);
 
 
     if (
-        horizontal <= 0
+        horizontal === 0
     ) {
 
         return 1;
@@ -857,54 +583,46 @@ function getEyeEAR(
 
 
     return (
-        (
-            vertical1 +
-            vertical2
-        ) /
-        (
-            2 *
-            horizontal
-        )
+
+        vertical1 +
+        vertical2
+
+    ) / (
+
+        2 *
+        horizontal
+
     );
 
 }
 
 
-/* =========================================================
+/* =========================================
    DISTANCE
-========================================================= */
+========================================= */
 
-function distance(
-    a,
-    b
-) {
+function distance(a, b) {
 
-    const dx =
-        a.x -
-        b.x;
+    const x =
+        a.x - b.x;
 
-    const dy =
-        a.y -
-        b.y;
+    const y =
+        a.y - b.y;
 
 
     return Math.sqrt(
-        (
-            dx * dx
-        ) +
-        (
-            dy * dy
-        )
+        x * x +
+        y * y
     );
 
 }
 
 
-/* =========================================================
+/* =========================================
    EYES CLOSED
-========================================================= */
+========================================= */
 
-function handleEyesClosed() {
+function eyesAreClosed() {
 
     /*
      * Start timer
@@ -921,7 +639,7 @@ function handleEyesClosed() {
 
 
     /*
-     * Show closing
+     * Before warning
      */
 
     if (!eyesClosed) {
@@ -936,10 +654,10 @@ function handleEyesClosed() {
 
 
     /*
-     * Calculate duration
+     * Time
      */
 
-    const duration =
+    const time =
         performance.now() -
         eyesClosedSince;
 
@@ -949,13 +667,14 @@ function handleEyesClosed() {
      */
 
     if (
-        duration >=
-        SETTINGS.eyeClosedDuration
+        time >=
+        EYE_CLOSED_TIME
     ) {
 
         if (!eyesClosed) {
 
-            eyesClosed = true;
+            eyesClosed =
+                true;
 
 
             eyeStatus.textContent =
@@ -965,11 +684,9 @@ function handleEyesClosed() {
                 "closed";
 
 
-            /*
-             * Warning
-             */
+            showWarning();
 
-            showEyeWarning();
+            playEyeAudio();
 
         }
 
@@ -978,11 +695,11 @@ function handleEyesClosed() {
 }
 
 
-/* =========================================================
+/* =========================================
    EYES OPEN
-========================================================= */
+========================================= */
 
-function handleEyesOpen() {
+function eyesAreOpen() {
 
     eyesClosedSince =
         null;
@@ -995,20 +712,23 @@ function handleEyesOpen() {
         "open";
 
 
-    if (eyesClosed) {
+    if (
+        eyesClosed
+    ) {
 
-        eyesClosed = false;
+        eyesClosed =
+            false;
 
-        updateWarning();
+        hideWarning();
 
     }
 
 }
 
 
-/* =========================================================
-   RESET EYES
-========================================================= */
+/* =========================================
+   RESET
+========================================= */
 
 function resetEyes() {
 
@@ -1018,475 +738,29 @@ function resetEyes() {
     eyesClosed =
         false;
 
-    /*
-     * Don't hide phone warning
-     */
-
-    updateWarning();
-
-}
-
-
-/* =========================================================
-   FACE DETECTION LOOP
-========================================================= */
-
-async function startFaceDetection() {
-
-    if (
-        faceLoopRunning
-    ) {
-
-        return;
-
-    }
-
-
-    if (!faceMesh) {
-
-        console.error(
-            "Face Mesh not ready."
-        );
-
-        return;
-    }
-
-
-    faceLoopRunning =
-        true;
-
-
-    console.log(
-        "Eye detection started."
-    );
-
-
-    while (
-        faceLoopRunning
-    ) {
-
-        if (
-            video.readyState >= 2 &&
-            video.videoWidth > 0
-        ) {
-
-            try {
-
-                await faceMesh.send({
-
-                    image: video
-
-                });
-
-            } catch (error) {
-
-                console.warn(
-                    "Face detection error:",
-                    error
-                );
-
-            }
-
-        }
-
-
-        await sleep(
-            SETTINGS.eyeDetectionInterval
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   PHONE MODEL
-========================================================= */
-
-async function loadPhoneModel() {
-
-    if (phoneModel) {
-
-        startPhoneDetection();
-
-        return;
-    }
-
-
-    if (
-        typeof cocoSsd ===
-        "undefined"
-    ) {
-
-        console.error(
-            "COCO-SSD library not loaded."
-        );
-
-        return;
-    }
-
-
-    try {
-
-        console.log(
-            "Loading phone detection AI..."
-        );
-
-
-        phoneModel =
-            await cocoSsd.load();
-
-
-        console.log(
-            "Phone detection AI ready."
-        );
-
-
-        startPhoneDetection();
-
-
-    } catch (error) {
-
-        console.error(
-            "Phone model loading error:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   PHONE DETECTION LOOP
-========================================================= */
-
-async function startPhoneDetection() {
-
-    if (
-        phoneLoopRunning
-    ) {
-
-        return;
-
-    }
-
-
-    if (!phoneModel) {
-
-        return;
-
-    }
-
-
-    phoneLoopRunning =
-        true;
-
-
-    console.log(
-        "Phone detection started."
-    );
-
-
-    while (
-        phoneLoopRunning
-    ) {
-
-        if (
-            video.readyState >= 2 &&
-            video.videoWidth > 0 &&
-            !phoneDetecting
-        ) {
-
-            await detectPhone();
-
-        }
-
-
-        await sleep(
-            SETTINGS.phoneDetectionInterval
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   DETECT PHONE
-========================================================= */
-
-async function detectPhone() {
-
-    if (
-        !phoneModel ||
-        phoneDetecting
-    ) {
-
-        return;
-
-    }
-
-
-    phoneDetecting =
-        true;
-
-
-    try {
-
-        /*
-         * Canvas
-         */
-
-        canvas.width =
-            video.videoWidth;
-
-        canvas.height =
-            video.videoHeight;
-
-
-        /*
-         * Camera frame
-         */
-
-        ctx.drawImage(
-
-            video,
-
-            0,
-            0,
-
-            canvas.width,
-            canvas.height
-
-        );
-
-
-        /*
-         * AI prediction
-         */
-
-        const predictions =
-            await phoneModel.detect(
-                canvas
-            );
-
-
-        /*
-         * Search phone
-         */
-
-        const foundPhone =
-            predictions.some(
-                prediction => {
-
-                    return (
-
-                        prediction.class ===
-                        "cell phone"
-
-                        &&
-
-                        prediction.score >=
-                        SETTINGS.phoneConfidence
-
-                    );
-
-                }
-            );
-
-
-        /*
-         * PHONE FOUND
-         */
-
-        if (
-            foundPhone
-        ) {
-
-            if (
-                !phoneDetected
-            ) {
-
-                phoneDetected =
-                    true;
-
-
-                console.log(
-                    "📱 PHONE DETECTED"
-                );
-
-
-                showPhoneWarning();
-
-            }
-
-        }
-
-
-        /*
-         * PHONE REMOVED
-         */
-
-        else {
-
-            if (
-                phoneDetected
-            ) {
-
-                phoneDetected =
-                    false;
-
-
-                console.log(
-                    "Phone removed"
-                );
-
-
-                updateWarning();
-
-            }
-
-        }
-
-
-    } catch (error) {
-
-        console.warn(
-            "Phone detection error:",
-            error
-        );
-
-    }
-
-
-    phoneDetecting =
-        false;
-
-}
-
-
-/* =========================================================
-   EYE WARNING
-========================================================= */
-
-function showEyeWarning() {
-
-    /*
-     * Show text immediately
-     */
-
-    updateWarning();
-
-
-    /*
-     * Play audio
-     */
-
-    playEyeAudio();
-
-}
-
-
-/* =========================================================
-   PHONE WARNING
-========================================================= */
-
-function showPhoneWarning() {
-
-    /*
-     * Show text immediately
-     */
-
-    updateWarning();
-
-
-    /*
-     * Play audio
-     */
-
-    playPhoneAudio();
-
-}
-
-
-/* =========================================================
-   WARNING MANAGER
-========================================================= */
-
-function updateWarning() {
-
-    /*
-     * Phone has priority
-     */
-
-    if (
-        phoneDetected
-    ) {
-
-        setWarning(
-            "PUT THE PHONE AWAY!",
-            "phone"
-        );
-
-        return;
-    }
-
-
-    /*
-     * Eye warning
-     */
-
-    if (
-        eyesClosed
-    ) {
-
-        setWarning(
-            "WAKE UP!",
-            "eye"
-        );
-
-        return;
-    }
-
-
-    /*
-     * Nothing
-     */
-
     hideWarning();
 
 }
 
 
-/* =========================================================
-   SET WARNING
-========================================================= */
+/* =========================================
+   WARNING
+========================================= */
 
-function setWarning(
-    text,
-    type
-) {
+function showWarning() {
 
     warning.textContent =
-        text;
-
+        "WAKE UP!";
 
     warning.className =
-        "warning " +
-        type;
-
-
-    warning.classList.add(
-        "show"
-    );
+        "warning show";
 
 }
 
 
-/* =========================================================
+/* =========================================
    HIDE WARNING
-========================================================= */
+========================================= */
 
 function hideWarning() {
 
@@ -1494,23 +768,19 @@ function hideWarning() {
         "show"
     );
 
-
-    warning.textContent =
-        "";
-
 }
 
 
-/* =========================================================
-   EYE AUDIO
-========================================================= */
+/* =========================================
+   AUDIO
+========================================= */
 
 function playEyeAudio() {
 
     if (!eyeAudio) {
 
         console.error(
-            "eyeAudio element missing."
+            "eye.mp3 not found"
         );
 
         return;
@@ -1526,21 +796,20 @@ function playEyeAudio() {
      */
 
     if (
-        now -
-        lastEyeAudio <
-        SETTINGS.audioCooldown
+        now - lastAudioTime <
+        AUDIO_COOLDOWN
     ) {
 
         return;
     }
 
 
-    lastEyeAudio =
+    lastAudioTime =
         now;
 
 
     console.log(
-        "🔊 Playing eye.mp3"
+        "Playing eye.mp3..."
     );
 
 
@@ -1558,38 +827,33 @@ function playEyeAudio() {
             false;
 
 
-        const playPromise =
-            eyeAudio.play();
+        eyeAudio.play()
+            .then(() => {
 
+                console.log(
+                    "✓ eye.mp3 playing"
+                );
 
-        if (
-            playPromise
-        ) {
+            })
+            .catch(error => {
 
-            playPromise
-                .then(() => {
+                console.error(
+                    "Audio blocked:",
+                    error
+                );
 
-                    console.log(
-                        "✓ eye.mp3 playing"
-                    );
+                /*
+                 * Browser blocked autoplay.
+                 * User interaction required.
+                 */
 
-                })
-                .catch(error => {
-
-                    console.error(
-                        "❌ eye.mp3 blocked:",
-                        error
-                    );
-
-                });
-
-        }
+            });
 
 
     } catch (error) {
 
         console.error(
-            "Eye audio error:",
+            "Audio error:",
             error
         );
 
@@ -1598,106 +862,9 @@ function playEyeAudio() {
 }
 
 
-/* =========================================================
-   PHONE AUDIO
-========================================================= */
-
-function playPhoneAudio() {
-
-    if (!phoneAudio) {
-
-        console.error(
-            "phoneAudio element missing."
-        );
-
-        return;
-    }
-
-
-    const now =
-        Date.now();
-
-
-    /*
-     * Cooldown
-     */
-
-    if (
-        now -
-        lastPhoneAudio <
-        SETTINGS.audioCooldown
-    ) {
-
-        return;
-    }
-
-
-    lastPhoneAudio =
-        now;
-
-
-    console.log(
-        "🔊 Playing phone.mp3"
-    );
-
-
-    try {
-
-        phoneAudio.pause();
-
-        phoneAudio.currentTime =
-            0;
-
-        phoneAudio.volume =
-            1;
-
-        phoneAudio.muted =
-            false;
-
-
-        const playPromise =
-            phoneAudio.play();
-
-
-        if (
-            playPromise
-        ) {
-
-            playPromise
-                .then(() => {
-
-                    console.log(
-                        "✓ phone.mp3 playing"
-                    );
-
-                })
-                .catch(error => {
-
-                    console.error(
-                        "❌ phone.mp3 blocked:",
-                        error
-                    );
-
-                });
-
-        }
-
-
-    } catch (error) {
-
-        console.error(
-            "Phone audio error:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =========================================================
+/* =========================================
    SLEEP
-========================================================= */
+========================================= */
 
 function sleep(ms) {
 
@@ -1715,55 +882,29 @@ function sleep(ms) {
 }
 
 
-/* =========================================================
+/* =========================================
    CLEANUP
-========================================================= */
+========================================= */
 
 window.addEventListener(
     "beforeunload",
     () => {
 
-        faceLoopRunning =
-            false;
-
-        phoneLoopRunning =
+        detectionRunning =
             false;
 
 
-        if (
-            cameraStream
-        ) {
+        if (cameraStream) {
 
             cameraStream
                 .getTracks()
-                .forEach(track => {
-
-                    track.stop();
-
-                });
+                .forEach(
+                    track => {
+                        track.stop();
+                    }
+                );
 
         }
 
     }
 );
-
-
-/* =========================================================
-   START
-========================================================= */
-
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initialize
-    );
-
-} else {
-
-    initialize();
-
-}

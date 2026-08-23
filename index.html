@@ -3,7 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>Smart Study Monitor</title>
 
@@ -12,15 +14,9 @@
 
 <body>
 
-    <!-- START BUTTON -->
-    <button id="startBtn" class="start-btn">
-        ▶ START MONITORING
-    </button>
-
-
-    <!-- FULL SCREEN CAMERA -->
     <main class="camera-container">
 
+        <!-- CAMERA -->
         <video
             id="video"
             autoplay
@@ -28,6 +24,7 @@
             playsinline>
         </video>
 
+        <!-- HIDDEN CANVAS -->
         <canvas id="canvas"></canvas>
 
 
@@ -55,25 +52,20 @@
 
             <div class="eye-status">
                 <span>Status</span>
-
-                <strong
-                    id="eyeStatus"
-                    class="waiting">
-                    WAITING
-                </strong>
+                <strong id="eyeStatus">WAITING</strong>
             </div>
 
         </div>
 
 
         <!-- LIVE -->
-        <div class="live-indicator">
-            <span class="live-dot"></span>
+        <div class="live">
+            <span></span>
             LIVE
         </div>
 
 
-        <!-- SCAN LINE -->
+        <!-- SCAN -->
         <div class="scan-line"></div>
 
 
@@ -85,60 +77,33 @@
 
 
         <!-- WARNING -->
-        <div
-            id="warning"
-            class="warning">
-        </div>
+        <div id="warning" class="warning"></div>
 
 
         <!-- CAMERA MESSAGE -->
-        <div
-            id="cameraMessage"
-            class="camera-message show">
-            Click START MONITORING
+        <div id="cameraMessage" class="camera-message">
+            Starting camera...
         </div>
 
     </main>
 
 
-    <!-- EYE AUDIO -->
-    <audio
-        id="eyeAudio"
-        preload="auto">
+    <!-- AUDIO -->
 
-        <source
-            src="eye.mp3"
-            type="audio/mpeg">
-
+    <audio id="eyeAudio" preload="auto">
+        <source src="eye.mp3" type="audio/mpeg">
     </audio>
 
 
-    <!-- PHONE AUDIO -->
-    <audio
-        id="phoneAudio"
-        preload="auto">
+    <!-- MEDIAPIPE -->
 
-        <source
-            src="phone.mp3"
-            type="audio/mpeg">
-
-    </audio>
-
-
-    <!-- MEDIAPIPE FACE MESH -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 
 
-    <!-- TENSORFLOW -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-
-
-    <!-- COCO SSD -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
-
-
     <!-- MAIN JS -->
+
     <script src="script.js"></script>
 
 </body>
+
 </html>

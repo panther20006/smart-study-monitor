@@ -4,32 +4,21 @@
     box-sizing: border-box;
 }
 
-
 html,
 body {
-
     width: 100%;
     height: 100%;
-
     overflow: hidden;
-
     background: #000;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    color: white;
+    font-family: Arial, sans-serif;
 }
 
 
-/* =========================================================
-   CAMERA
-========================================================= */
+/* =========================================
+   FULL SCREEN CAMERA
+========================================= */
 
 .camera-container {
-
     position: fixed;
 
     inset: 0;
@@ -43,169 +32,118 @@ body {
 }
 
 
-/* =========================================================
+/* =========================================
    VIDEO
-========================================================= */
+========================================= */
 
 #video {
+
+    position: absolute;
+
+    inset: 0;
 
     width: 100%;
     height: 100%;
 
-    /*
-       Camera ko thoda peeche rakhta hai
-    */
+    object-fit: cover;
 
-    object-fit: contain;
+    /*
+     * Camera thoda peeche
+     */
+    transform: scaleX(-1) scale(0.92);
 
     background: #000;
-
-    transform: scaleX(-1);
-
-    display: block;
 }
 
 
-/* =========================================================
+/* =========================================
    CANVAS
-========================================================= */
+========================================= */
 
 #canvas {
     display: none;
 }
 
 
-/* =========================================================
-   START BUTTON
-========================================================= */
-
-.start-btn {
-
-    position: fixed;
-
-    top: 20px;
-    right: 20px;
-
-    z-index: 1000;
-
-    padding: 13px 20px;
-
-    border: 1px solid
-        rgba(139, 92, 246, 0.7);
-
-    border-radius: 12px;
-
-    background:
-        rgba(8, 8, 20, 0.9);
-
-    color: white;
-
-    font-size: 12px;
-
-    font-weight: bold;
-
-    cursor: pointer;
-
-    box-shadow:
-        0 0 25px
-        rgba(139, 92, 246, 0.4);
-
-    backdrop-filter: blur(10px);
-
-    transition: 0.2s;
-}
-
-
-.start-btn:hover {
-
-    background: #8b5cf6;
-
-}
-
-
-.start-btn.active {
-
-    background:
-        rgba(0, 255, 136, 0.12);
-
-    border-color: #00ff88;
-
-    color: #00ff88;
-}
-
-
-/* =========================================================
+/* =========================================
    EYE RATIO
-========================================================= */
+========================================= */
 
 .eye-stats {
 
     position: absolute;
 
-    top: 20px;
-    left: 20px;
+    top: 18px;
+    left: 18px;
 
-    width: 165px;
+    width: 155px;
 
     padding: 12px;
 
-    z-index: 50;
+    background: rgba(5, 5, 15, 0.75);
+
+    border: 1px solid rgba(139, 92, 246, 0.5);
 
     border-radius: 12px;
 
-    background:
-        rgba(5, 5, 16, 0.84);
-
-    border:
-        1px solid
-        rgba(139, 92, 246, 0.5);
-
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
 
     box-shadow:
-        0 0 25px
-        rgba(139, 92, 246, 0.25);
+        0 0 20px rgba(139, 92, 246, 0.2);
+
+    z-index: 20;
+
+    color: white;
 }
 
+
+/* TITLE */
 
 .eye-title {
 
     font-size: 11px;
 
-    font-weight: 900;
+    font-weight: bold;
 
     letter-spacing: 1px;
 
-    color: #c8b5ff;
+    color: #b58cff;
 
-    margin-bottom: 8px;
+    margin-bottom: 7px;
 }
 
+
+/* ROW */
 
 .eye-line,
 .eye-status {
 
     display: flex;
 
-    align-items: center;
-
     justify-content: space-between;
 
-    padding: 5px 0;
+    align-items: center;
+
+    padding: 4px 0;
 
     font-size: 11px;
 
-    color: #aaa;
+    color: #999;
 }
 
 
-.eye-line strong {
+.eye-line strong,
+.eye-status strong {
 
-    color: white;
+    color: #fff;
 
     font-family: monospace;
+
+    font-size: 12px;
 }
 
+
+/* AVERAGE */
 
 .average {
 
@@ -215,28 +153,32 @@ body {
 
     margin-top: 3px;
 
-    padding-top: 7px;
+    padding-top: 6px;
 }
 
 
+/* STATUS */
+
 .eye-status {
+
+    margin-top: 4px;
 
     border-top:
         1px solid
         rgba(255,255,255,0.08);
 
-    margin-top: 4px;
-
-    padding-top: 7px;
+    padding-top: 6px;
 }
 
 
-#eyeStatus.waiting {
+#eyeStatus {
+
     color: #ffd43b;
 }
 
 
 #eyeStatus.open {
+
     color: #00ff88;
 }
 
@@ -246,30 +188,28 @@ body {
     color: #ff3b3b;
 
     animation:
-        blinkStatus 0.6s infinite;
+        blink 0.6s infinite;
 }
 
 
-@keyframes blinkStatus {
+@keyframes blink {
 
     50% {
-        opacity: 0.4;
+        opacity: 0.3;
     }
 }
 
 
-/* =========================================================
+/* =========================================
    LIVE
-========================================================= */
+========================================= */
 
-.live-indicator {
+.live {
 
     position: absolute;
 
     top: 20px;
-    right: 20px;
-
-    z-index: 40;
+    right: 22px;
 
     display: flex;
 
@@ -277,29 +217,22 @@ body {
 
     gap: 7px;
 
-    padding: 8px 12px;
-
-    border-radius: 20px;
-
-    background:
-        rgba(0,0,0,0.55);
-
-    border:
-        1px solid
-        rgba(0,255,136,0.3);
-
     color: #00ff88;
 
     font-size: 11px;
 
     font-weight: bold;
+
+    letter-spacing: 1px;
+
+    z-index: 20;
 }
 
 
-.live-dot {
+.live span {
 
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
 
     border-radius: 50%;
 
@@ -316,42 +249,39 @@ body {
 @keyframes livePulse {
 
     50% {
-
         opacity: 0.3;
-
         transform: scale(0.7);
     }
 }
 
 
-/* =========================================================
+/* =========================================
    SCAN LINE
-========================================================= */
+========================================= */
 
 .scan-line {
 
     position: absolute;
 
-    left: 0;
-    right: 0;
-
     top: 0;
+    left: 0;
 
+    width: 100%;
     height: 2px;
 
-    z-index: 10;
-
     background:
-        rgba(139,92,246,0.7);
+        rgba(139, 92, 246, 0.7);
 
     box-shadow:
         0 0 15px
-        rgba(139,92,246,0.9);
+        rgba(139, 92, 246, 1);
 
     animation:
         scan 4s linear infinite;
 
     pointer-events: none;
+
+    z-index: 10;
 }
 
 
@@ -371,20 +301,22 @@ body {
 }
 
 
-/* =========================================================
-   CAMERA CORNERS
-========================================================= */
+/* =========================================
+   CORNERS
+========================================= */
 
 .corner {
 
     position: absolute;
 
-    width: 35px;
-    height: 35px;
+    width: 30px;
+    height: 30px;
 
-    z-index: 20;
+    border-color: #a276ff;
 
-    border-color: #9b6cff;
+    z-index: 10;
+
+    pointer-events: none;
 }
 
 
@@ -428,45 +360,9 @@ body {
 }
 
 
-/* =========================================================
-   CAMERA MESSAGE
-========================================================= */
-
-.camera-message {
-
-    position: absolute;
-
-    left: 50%;
-    top: 50%;
-
-    transform:
-        translate(-50%, -50%);
-
-    z-index: 100;
-
-    padding: 13px 20px;
-
-    border-radius: 10px;
-
-    background:
-        rgba(0,0,0,0.75);
-
-    color: #ccc;
-
-    font-size: 14px;
-
-    display: none;
-}
-
-
-.camera-message.show {
-    display: block;
-}
-
-
-/* =========================================================
+/* =========================================
    WARNING
-========================================================= */
+========================================= */
 
 .warning {
 
@@ -477,20 +373,19 @@ body {
 
     transform:
         translate(-50%, -50%)
-        scale(0.7);
+        scale(0.8);
 
-    z-index: 200;
+    padding: 20px 35px;
 
-    padding: 25px 40px;
+    border-radius: 15px;
 
-    border-radius: 18px;
+    background:
+        rgba(255, 30, 30, 0.94);
+
+    color: white;
 
     font-size:
-        clamp(
-            25px,
-            5vw,
-            65px
-        );
+        clamp(25px, 5vw, 60px);
 
     font-weight: 900;
 
@@ -503,6 +398,12 @@ body {
     pointer-events: none;
 
     transition: 0.2s;
+
+    z-index: 50;
+
+    box-shadow:
+        0 0 60px
+        rgba(255, 0, 0, 0.7);
 }
 
 
@@ -516,74 +417,92 @@ body {
 }
 
 
-/* EYE */
+/* =========================================
+   CAMERA MESSAGE
+========================================= */
 
-.warning.eye {
+.camera-message {
+
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    padding: 14px 20px;
 
     background:
-        rgba(255,35,35,0.94);
+        rgba(0,0,0,0.75);
 
-    box-shadow:
-        0 0 70px
-        rgba(255,30,30,0.8);
+    border:
+        1px solid
+        rgba(139,92,246,0.4);
+
+    border-radius: 10px;
+
+    color: #ddd;
+
+    font-size: 14px;
+
+    z-index: 100;
+
+    transition: 0.3s;
 }
 
 
-/* PHONE */
+.camera-message.hide {
 
-.warning.phone {
+    opacity: 0;
 
-    background:
-        rgba(255,130,0,0.95);
-
-    box-shadow:
-        0 0 70px
-        rgba(255,120,0,0.8);
+    pointer-events: none;
 }
 
 
-/* =========================================================
+/* =========================================
    MOBILE
-========================================================= */
+========================================= */
 
 @media (max-width: 600px) {
 
+    #video {
+
+        transform:
+            scaleX(-1)
+            scale(0.88);
+    }
+
+
     .eye-stats {
 
-        top: 12px;
-        left: 12px;
+        top: 10px;
+        left: 10px;
 
-        width: 145px;
+        width: 140px;
 
         padding: 9px;
     }
 
 
-    .live-indicator {
+    .eye-title {
+
+        font-size: 10px;
+    }
+
+
+    .eye-line,
+    .eye-status {
+
+        font-size: 10px;
+    }
+
+
+    .live {
 
         top: 12px;
         right: 12px;
-    }
 
-
-    .start-btn {
-
-        top: auto;
-
-        right: 50%;
-
-        bottom: 20px;
-
-        transform:
-            translateX(50%);
-    }
-
-
-    .warning {
-
-        width: 85%;
-
-        padding:
-            18px 10px;
+        font-size: 9px;
     }
 }
