@@ -1,26 +1,9 @@
-/* =========================================================
-   SMART STUDY MONITOR
-   FULL SCREEN CAMERA
-========================================================= */
-
-
-/* =========================================================
-   RESET
-========================================================= */
-
 * {
-
     margin: 0;
     padding: 0;
-
     box-sizing: border-box;
-
 }
 
-
-/* =========================================================
-   BODY
-========================================================= */
 
 html,
 body {
@@ -37,16 +20,19 @@ body {
         Helvetica,
         sans-serif;
 
+    color: white;
 }
 
 
 /* =========================================================
-   CAMERA CONTAINER
+   CAMERA
 ========================================================= */
 
 .camera-container {
 
-    position: relative;
+    position: fixed;
+
+    inset: 0;
 
     width: 100vw;
     height: 100vh;
@@ -54,7 +40,6 @@ body {
     overflow: hidden;
 
     background: #000;
-
 }
 
 
@@ -64,32 +49,20 @@ body {
 
 #video {
 
-    position: absolute;
-
-    inset: 0;
-
     width: 100%;
     height: 100%;
 
     /*
-     * Full screen camera
-     */
+       Camera ko thoda peeche rakhta hai
+    */
 
-    object-fit: cover;
-
-    /*
-     * Mirror camera
-     * Slightly less zoom
-     */
-
-    transform:
-        scaleX(-1)
-        scale(0.7);
-
-    display: block;
+    object-fit: contain;
 
     background: #000;
 
+    transform: scaleX(-1);
+
+    display: block;
 }
 
 
@@ -98,132 +71,143 @@ body {
 ========================================================= */
 
 #canvas {
-
     display: none;
-
 }
 
 
 /* =========================================================
-   EYE RATIO BOX
-   SMALL TOP LEFT
+   START BUTTON
+========================================================= */
+
+.start-btn {
+
+    position: fixed;
+
+    top: 20px;
+    right: 20px;
+
+    z-index: 1000;
+
+    padding: 13px 20px;
+
+    border: 1px solid
+        rgba(139, 92, 246, 0.7);
+
+    border-radius: 12px;
+
+    background:
+        rgba(8, 8, 20, 0.9);
+
+    color: white;
+
+    font-size: 12px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 0 25px
+        rgba(139, 92, 246, 0.4);
+
+    backdrop-filter: blur(10px);
+
+    transition: 0.2s;
+}
+
+
+.start-btn:hover {
+
+    background: #8b5cf6;
+
+}
+
+
+.start-btn.active {
+
+    background:
+        rgba(0, 255, 136, 0.12);
+
+    border-color: #00ff88;
+
+    color: #00ff88;
+}
+
+
+/* =========================================================
+   EYE RATIO
 ========================================================= */
 
 .eye-stats {
 
     position: absolute;
 
-    top: 18px;
-    left: 18px;
+    top: 20px;
+    left: 20px;
 
-    width: 150px;
+    width: 165px;
 
-    padding: 10px 12px;
+    padding: 12px;
+
+    z-index: 50;
+
+    border-radius: 12px;
 
     background:
-        rgba(5, 5, 15, 0.82);
+        rgba(5, 5, 16, 0.84);
 
     border:
         1px solid
-        rgba(139, 92, 246, 0.45);
+        rgba(139, 92, 246, 0.5);
 
-    border-radius: 11px;
-
-    backdrop-filter:
-        blur(12px);
-
-    -webkit-backdrop-filter:
-        blur(12px);
-
-    z-index: 20;
+    backdrop-filter: blur(12px);
 
     box-shadow:
-        0 0 20px
-        rgba(139, 92, 246, 0.18);
-
+        0 0 25px
+        rgba(139, 92, 246, 0.25);
 }
 
 
-/* =========================================================
-   EYE TITLE
-========================================================= */
-
 .eye-title {
 
-    color: #cbb7ff;
-
-    font-size: 10px;
+    font-size: 11px;
 
     font-weight: 900;
 
     letter-spacing: 1px;
 
-    margin-bottom: 6px;
+    color: #c8b5ff;
 
+    margin-bottom: 8px;
 }
 
-
-/* =========================================================
-   EYE ROW
-========================================================= */
 
 .eye-line,
 .eye-status {
 
     display: flex;
 
-    justify-content:
-        space-between;
-
     align-items: center;
 
-    padding: 4px 0;
+    justify-content: space-between;
 
-    color: #9999ad;
+    padding: 5px 0;
 
-    font-size: 10px;
+    font-size: 11px;
 
+    color: #aaa;
 }
 
-
-/* =========================================================
-   EAR VALUE
-========================================================= */
 
 .eye-line strong {
 
     color: white;
 
-    font-family:
-        monospace;
-
-    font-size: 11px;
-
+    font-family: monospace;
 }
 
 
-/* =========================================================
-   AVERAGE
-========================================================= */
-
-.eye-line.average {
-
-    border-top:
-        1px solid
-        rgba(255,255,255,0.08);
-
-    margin-top: 2px;
-
-    padding-top: 5px;
-
-}
-
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-.eye-status {
+.average {
 
     border-top:
         1px solid
@@ -231,58 +215,46 @@ body {
 
     margin-top: 3px;
 
-    padding-top: 5px;
-
+    padding-top: 7px;
 }
 
 
-.eye-status strong {
+.eye-status {
 
-    font-size: 9px;
+    border-top:
+        1px solid
+        rgba(255,255,255,0.08);
 
-    letter-spacing: 0.5px;
+    margin-top: 4px;
 
+    padding-top: 7px;
 }
 
 
-/* OPEN */
+#eyeStatus.waiting {
+    color: #ffd43b;
+}
+
 
 #eyeStatus.open {
-
     color: #00ff88;
-
 }
 
-
-/* CLOSED */
 
 #eyeStatus.closed {
 
     color: #ff3b3b;
 
     animation:
-        statusBlink 0.7s infinite;
-
+        blinkStatus 0.6s infinite;
 }
 
 
-/* WAITING */
-
-#eyeStatus.waiting {
-
-    color: #ffd43b;
-
-}
-
-
-@keyframes statusBlink {
+@keyframes blinkStatus {
 
     50% {
-
-        opacity: 0.35;
-
+        opacity: 0.4;
     }
-
 }
 
 
@@ -297,38 +269,30 @@ body {
     top: 20px;
     right: 20px;
 
+    z-index: 40;
+
     display: flex;
 
     align-items: center;
 
     gap: 7px;
 
-    padding:
-        7px
-        11px;
+    padding: 8px 12px;
+
+    border-radius: 20px;
 
     background:
         rgba(0,0,0,0.55);
 
     border:
         1px solid
-        rgba(0,255,136,0.25);
-
-    border-radius: 20px;
+        rgba(0,255,136,0.3);
 
     color: #00ff88;
 
-    font-size: 10px;
+    font-size: 11px;
 
-    font-weight: 900;
-
-    letter-spacing: 1px;
-
-    z-index: 20;
-
-    backdrop-filter:
-        blur(8px);
-
+    font-weight: bold;
 }
 
 
@@ -339,16 +303,13 @@ body {
 
     border-radius: 50%;
 
-    background:
-        #00ff88;
+    background: #00ff88;
 
     box-shadow:
-        0 0 12px
-        #00ff88;
+        0 0 12px #00ff88;
 
     animation:
         livePulse 1s infinite;
-
 }
 
 
@@ -358,11 +319,8 @@ body {
 
         opacity: 0.3;
 
-        transform:
-            scale(0.65);
-
+        transform: scale(0.7);
     }
-
 }
 
 
@@ -381,43 +339,35 @@ body {
 
     height: 2px;
 
-    background:
-        rgba(139, 92, 246, 0.65);
-
-    box-shadow:
-        0 0 18px
-        rgba(139, 92, 246, 0.9);
-
-    animation:
-        scan 3.5s linear infinite;
-
-    pointer-events: none;
-
     z-index: 10;
 
+    background:
+        rgba(139,92,246,0.7);
+
+    box-shadow:
+        0 0 15px
+        rgba(139,92,246,0.9);
+
+    animation:
+        scan 4s linear infinite;
+
+    pointer-events: none;
 }
 
 
 @keyframes scan {
 
     0% {
-
         top: 0;
-
     }
 
     50% {
-
         top: 100%;
-
     }
 
     100% {
-
         top: 0;
-
     }
-
 }
 
 
@@ -432,13 +382,9 @@ body {
     width: 35px;
     height: 35px;
 
-    border-color:
-        rgba(155,108,255,0.9);
+    z-index: 20;
 
-    pointer-events: none;
-
-    z-index: 15;
-
+    border-color: #9b6cff;
 }
 
 
@@ -447,12 +393,8 @@ body {
     top: 15px;
     left: 15px;
 
-    border-top:
-        2px solid;
-
-    border-left:
-        2px solid;
-
+    border-top: 2px solid;
+    border-left: 2px solid;
 }
 
 
@@ -461,12 +403,8 @@ body {
     top: 15px;
     right: 15px;
 
-    border-top:
-        2px solid;
-
-    border-right:
-        2px solid;
-
+    border-top: 2px solid;
+    border-right: 2px solid;
 }
 
 
@@ -475,12 +413,8 @@ body {
     bottom: 15px;
     left: 15px;
 
-    border-bottom:
-        2px solid;
-
-    border-left:
-        2px solid;
-
+    border-bottom: 2px solid;
+    border-left: 2px solid;
 }
 
 
@@ -489,12 +423,8 @@ body {
     bottom: 15px;
     right: 15px;
 
-    border-bottom:
-        2px solid;
-
-    border-right:
-        2px solid;
-
+    border-bottom: 2px solid;
+    border-right: 2px solid;
 }
 
 
@@ -506,40 +436,31 @@ body {
 
     position: absolute;
 
-    top: 50%;
     left: 50%;
+    top: 50%;
 
     transform:
         translate(-50%, -50%);
 
-    padding:
-        13px
-        22px;
+    z-index: 100;
+
+    padding: 13px 20px;
+
+    border-radius: 10px;
 
     background:
         rgba(0,0,0,0.75);
 
-    border:
-        1px solid
-        rgba(139,92,246,0.3);
-
-    border-radius: 10px;
-
-    color: #aaa;
+    color: #ccc;
 
     font-size: 14px;
 
-    z-index: 30;
-
     display: none;
-
 }
 
 
 .camera-message.show {
-
     display: block;
-
 }
 
 
@@ -551,22 +472,22 @@ body {
 
     position: absolute;
 
-    top: 50%;
     left: 50%;
+    top: 50%;
 
     transform:
         translate(-50%, -50%)
-        scale(0.75);
+        scale(0.7);
 
-    padding:
-        25px
-        40px;
+    z-index: 200;
+
+    padding: 25px 40px;
 
     border-radius: 18px;
 
     font-size:
         clamp(
-            24px,
+            25px,
             5vw,
             65px
         );
@@ -577,21 +498,13 @@ body {
 
     text-align: center;
 
-    white-space: nowrap;
-
     opacity: 0;
 
     pointer-events: none;
 
-    transition:
-        0.18s ease;
-
-    z-index: 50;
-
+    transition: 0.2s;
 }
 
-
-/* SHOW */
 
 .warning.show {
 
@@ -600,65 +513,32 @@ body {
     transform:
         translate(-50%, -50%)
         scale(1);
-
 }
 
 
-/* =========================================================
-   EYE WARNING
-========================================================= */
+/* EYE */
 
 .warning.eye {
 
     background:
-        rgba(255, 30, 30, 0.94);
-
-    color: white;
+        rgba(255,35,35,0.94);
 
     box-shadow:
         0 0 70px
-        rgba(255, 30, 30, 0.75);
-
-    animation:
-        warningPulse 0.8s infinite;
-
+        rgba(255,30,30,0.8);
 }
 
 
-/* =========================================================
-   PHONE WARNING
-========================================================= */
+/* PHONE */
 
 .warning.phone {
 
     background:
-        rgba(255, 130, 0, 0.95);
-
-    color: white;
+        rgba(255,130,0,0.95);
 
     box-shadow:
         0 0 70px
-        rgba(255, 120, 0, 0.75);
-
-    animation:
-        warningPulse 0.8s infinite;
-
-}
-
-
-/* =========================================================
-   WARNING ANIMATION
-========================================================= */
-
-@keyframes warningPulse {
-
-    50% {
-
-        filter:
-            brightness(1.25);
-
-    }
-
+        rgba(255,120,0,0.8);
 }
 
 
@@ -668,109 +548,42 @@ body {
 
 @media (max-width: 600px) {
 
-    #video {
-
-        transform:
-            scaleX(-1)
-            scale(0.88);
-
-    }
-
-
     .eye-stats {
 
         top: 12px;
         left: 12px;
 
-        width: 135px;
+        width: 145px;
 
-        padding:
-            8px
-            10px;
-
-    }
-
-
-    .eye-title {
-
-        font-size: 9px;
-
-    }
-
-
-    .eye-line,
-    .eye-status {
-
-        font-size: 9px;
-
-        padding: 3px 0;
-
-    }
-
-
-    .eye-line strong {
-
-        font-size: 10px;
-
+        padding: 9px;
     }
 
 
     .live-indicator {
 
-        top: 13px;
-        right: 13px;
-
-        padding:
-            6px
-            9px;
-
-        font-size: 9px;
-
+        top: 12px;
+        right: 12px;
     }
 
 
-    .corner {
+    .start-btn {
 
-        width: 25px;
-        height: 25px;
+        top: auto;
 
+        right: 50%;
+
+        bottom: 20px;
+
+        transform:
+            translateX(50%);
     }
 
 
     .warning {
 
-        width: 90%;
-
-        white-space: normal;
+        width: 85%;
 
         padding:
-            18px
-            12px;
-
-        font-size: 25px;
-
+            18px 10px;
     }
-
-}
-
-
-/* =========================================================
-   SMALL MOBILE
-========================================================= */
-
-@media (max-width: 380px) {
-
-    .eye-stats {
-
-        width: 125px;
-
-    }
-
-
-    .live-indicator {
-
-        display: none;
-
-    }
-
 }

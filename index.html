@@ -2,45 +2,24 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Smart Study Monitor</title>
 
-    <link
-        rel="stylesheet"
-        href="style.css">
-
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-
-    <!-- =====================================================
-         START BUTTON
-    ====================================================== -->
-
-    <button
-        id="startBtn"
-        class="start-btn">
-
+    <!-- START BUTTON -->
+    <button id="startBtn" class="start-btn">
         ▶ START MONITORING
-
     </button>
 
 
-    <!-- =====================================================
-         FULL SCREEN CAMERA
-    ====================================================== -->
-
+    <!-- FULL SCREEN CAMERA -->
     <main class="camera-container">
-
-
-        <!-- CAMERA -->
 
         <video
             id="video"
@@ -49,137 +28,80 @@
             playsinline>
         </video>
 
-
-        <!-- HIDDEN CANVAS -->
-
-        <canvas
-            id="canvas">
-        </canvas>
+        <canvas id="canvas"></canvas>
 
 
-        <!-- =================================================
-             EYE RATIO
-             SMALL TOP LEFT
-        ================================================== -->
-
-        <div
-            id="eyeStats"
-            class="eye-stats">
+        <!-- EYE RATIO -->
+        <div class="eye-stats">
 
             <div class="eye-title">
                 👁 EYE RATIO
             </div>
 
             <div class="eye-line">
-
                 <span>Left</span>
-
-                <strong id="leftEAR">
-                    --
-                </strong>
-
+                <strong id="leftEAR">--</strong>
             </div>
 
             <div class="eye-line">
-
                 <span>Right</span>
-
-                <strong id="rightEAR">
-                    --
-                </strong>
-
+                <strong id="rightEAR">--</strong>
             </div>
 
             <div class="eye-line average">
-
                 <span>Average</span>
-
-                <strong id="averageEAR">
-                    --
-                </strong>
-
+                <strong id="averageEAR">--</strong>
             </div>
 
             <div class="eye-status">
-
                 <span>Status</span>
 
                 <strong
                     id="eyeStatus"
                     class="waiting">
-
                     WAITING
-
                 </strong>
-
             </div>
 
         </div>
 
 
-        <!-- =================================================
-             LIVE
-        ================================================== -->
-
+        <!-- LIVE -->
         <div class="live-indicator">
-
             <span class="live-dot"></span>
-
             LIVE
-
         </div>
 
 
-        <!-- =================================================
-             SCAN LINE
-        ================================================== -->
-
+        <!-- SCAN LINE -->
         <div class="scan-line"></div>
 
 
-        <!-- =================================================
-             CAMERA CORNERS
-        ================================================== -->
-
+        <!-- CORNERS -->
         <div class="corner top-left"></div>
-
         <div class="corner top-right"></div>
-
         <div class="corner bottom-left"></div>
-
         <div class="corner bottom-right"></div>
 
 
-        <!-- =================================================
-             WARNING
-        ================================================== -->
-
+        <!-- WARNING -->
         <div
             id="warning"
             class="warning">
         </div>
 
 
-        <!-- =================================================
-             CAMERA MESSAGE
-        ================================================== -->
-
+        <!-- CAMERA MESSAGE -->
         <div
             id="cameraMessage"
             class="camera-message show">
-
             Click START MONITORING
-
         </div>
-
 
     </main>
 
 
-    <!-- =====================================================
-         EYE AUDIO
-    ====================================================== -->
-
+    <!-- EYE AUDIO -->
     <audio
         id="eyeAudio"
         preload="auto">
@@ -191,10 +113,7 @@
     </audio>
 
 
-    <!-- =====================================================
-         PHONE AUDIO
-    ====================================================== -->
-
+    <!-- PHONE AUDIO -->
     <audio
         id="phoneAudio"
         preload="auto">
@@ -206,34 +125,20 @@
     </audio>
 
 
-    <!-- =====================================================
-         MEDIAPIPE
-    ====================================================== -->
-
+    <!-- MEDIAPIPE FACE MESH -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 
 
-    <!-- =====================================================
-         TENSORFLOW
-    ====================================================== -->
-
+    <!-- TENSORFLOW -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
 
 
-    <!-- =====================================================
-         COCO SSD
-    ====================================================== -->
-
+    <!-- COCO SSD -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
 
 
-    <!-- =====================================================
-         MAIN JS
-    ====================================================== -->
-
+    <!-- MAIN JS -->
     <script src="script.js"></script>
 
-
 </body>
-
 </html>
